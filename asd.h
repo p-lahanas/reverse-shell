@@ -3,7 +3,7 @@
 #define ASD_RUN 2
 #define ASD_STOP 3
 
-#define MAX_COMMAND 200
+#define MAX_COMMAND 50
 
 typedef unsigned short int msg_type;
 

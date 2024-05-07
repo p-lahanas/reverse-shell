@@ -12,8 +12,6 @@ struct AsdPacket *create_asd_packet(msg_type type, char *command) {
   if (command != NULL) {
     strncpy(pack->command, command, MAX_COMMAND);
   }
-  
 
   return pack;
 }
-

@@ -6,9 +6,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "asd.h"
+
 #define SERVPORT 5432
 
-#define BUF_SIZE 500
+#define BUF_SIZE 200
 
 int main(int argc, char *argv[]) {
   int sfd = socket(PF_INET, SOCK_DGRAM, 0);
@@ -28,30 +30,58 @@ int main(int argc, char *argv[]) {
 
   // bind socket to the specified IP and port
   if (bind(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1) {
-    close(sfd);
     perror("bind");
+    close(sfd);
     exit(EXIT_FAILURE);
   }
 
   char buf[BUF_SIZE];
   ssize_t nbytes;
-  struct sockaddr_in recv_addr;
-  socklen_t addr_len;
+  int sbytes;
 
-  while (1) {
-    nbytes = recvfrom(sfd, buf, BUF_SIZE - 1, 0, (struct sockaddr *)&recv_addr,
+  struct sockaddr_in recv_addr;
+  socklen_t addr_len = sizeof(struct sockaddr_in);
+
+  struct AsdPacket recv_pack;
+  struct AsdPacket *ack;
+
+  int run = 1;
+  while (run) {
+    nbytes = recvfrom(sfd, buf, BUF_SIZE, 0, (struct sockaddr *)&recv_addr,
                       &addr_len);
 
+    /* Received nothing so skip this iteration */
     if (nbytes == -1) {
       continue;
     }
+    memcpy(&recv_pack, buf, sizeof(struct AsdPacket));
 
-    printf("Packet is of length: %ld bytes\n", nbytes);
-    buf[nbytes] = '\0';
-    printf("packet contains \"%s\"\n", buf);
-    fflush(stdout);
-    break;
+    switch (recv_pack.msg_type) {
+      case ASD_STOP:
+        run = 0;
+        break;
+
+      case ASD_TEST:
+        break;
+
+      case ASD_RUN:
+        /* Blindly run the command */
+        system(recv_pack.command);
+        break;
+    }
+
+    /* Send out an ack */
+    ack = create_asd_packet(ASD_ACK, NULL);
+    sbytes = sendto(sfd, ack, sizeof(struct AsdPacket), 0,
+                    (struct sockaddr *)&recv_addr, addr_len);
+
+    if (sbytes == -1) {
+      perror("sendto");
+      close(sfd);
+      exit(EXIT_FAILURE);
+    }
   }
+
   close(sfd);
 
   return 0;
