@@ -1,12 +1,11 @@
 #include <arpa/inet.h>
+#include <rtp/asd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "asd.h"
 
 #define SERVPORT 5432
 
@@ -71,7 +70,7 @@ int main(int argc, char *argv[]) {
     }
 
     /* Send out an ack */
-    ack = create_asd_packet(ASD_ACK, NULL);
+    ack = asd_create_packet(ASD_ACK, NULL);
     sbytes = sendto(sfd, ack, sizeof(struct AsdPacket), 0,
                     (struct sockaddr *)&recv_addr, addr_len);
 
