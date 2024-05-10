@@ -13,8 +13,8 @@ ssize_t asd_fill_packet(AsdPacket *pack, asd_msg_type type, char *cmd,
                         size_t cmd_len) {
 
   pack->type = type;
-  if (cmd_len > ASD_MAX_CMD) {
-    fprintf(stderr, "Command size not supported. Must be less than %d bytes",
+  if (cmd_len >= ASD_MAX_CMD) {
+    fprintf(stderr, "Command size too large. Must be less than %d bytes\n",
             ASD_MAX_CMD);
     return -1;
   }

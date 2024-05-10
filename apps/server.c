@@ -48,9 +48,9 @@ int main(int argc, char *argv[]) {
     if (nbytes == -1) {
       continue;
     }
-    printf("Received: %d\n", pack.type);
-    printf("Num bytes: %ld\n", nbytes);
+
     switch (pack.type) {
+
     case ASD_STOP:
       run = 0;
       break;
@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
       /* Blindly run the command */
       system(pack.cmd);
       break;
+
     case ASD_ACK:
       break;
     }
@@ -69,6 +70,7 @@ int main(int argc, char *argv[]) {
     /* Send out an ack */
     if (asd_send_ack(sfd, recv_addr) != 0) {
       perror("Sending ACK");
+      fprintf(stderr, "Error sending ACK\n");
       close(sfd);
       exit(EXIT_FAILURE);
     }

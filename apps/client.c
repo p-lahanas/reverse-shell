@@ -21,7 +21,7 @@ static void usage(void) {
           "Option (only use ONE flag at a time):\n"
           "  -r <command>  Send a run packet with the corresponding <command>\n"
           "  -t            Send a test packet\n"
-          "  -s Send a stop packet\n"
+          "  -s            Send a stop packet\n"
           "\n");
 
   exit(EXIT_FAILURE);
@@ -81,12 +81,12 @@ int main(int argc, char *argv[]) {
   }
 
   if (send_err != 0) {
-    perror("Error sending packet");
+    fprintf(stderr, "Error sending packet\n");
     close(sfd);
     exit(EXIT_FAILURE);
   }
 
-  printf("Received Ack\n");
+  printf("Received Ack from server\n");
 
   close(sfd);
 
