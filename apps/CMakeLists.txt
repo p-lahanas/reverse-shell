@@ -10,5 +10,5 @@ add_executable(server server.c)
 target_compile_features(client PRIVATE c_std_23)
 target_compile_features(server PRIVATE c_std_23)
 
-target_link_libraries(client PRIVATE rtp)
-target_link_libraries(server PRIVATE rtp)
+target_link_libraries(client PRIVATE asd)
+target_link_libraries(server PRIVATE asd)
