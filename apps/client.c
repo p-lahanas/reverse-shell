@@ -1,5 +1,5 @@
 #include <arpa/inet.h>
-#include <rtp/asd.h>
+#include <asd/asd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,8 +8,6 @@
 #include <unistd.h>
 
 #define SERVERPORT 5432
-
-#define BUF_SIZE 200
 
 /* Command-line flags */
 int rflag = 0; /* -r: Run packet */
@@ -23,29 +21,31 @@ static void usage(void) {
           "Option (only use ONE flag at a time):\n"
           "  -r <command>  Send a run packet with the corresponding <command>\n"
           "  -t            Send a test packet\n"
-          "  -s            Send a stop packet\n"
+          "  -s Send a stop packet\n"
           "\n");
 
   exit(EXIT_FAILURE);
 }
+
+void parse_args(int argc, char **argv);
 
 int main(int argc, char *argv[]) {
   char ch, *command;
 
   while ((ch = getopt(argc, argv, "tsr:")) != -1) {
     switch (ch) {
-      case 't':
-        tflag = 1;
-        break;
-      case 's':
-        sflag = 1;
-        break;
-      case 'r':
-        rflag = 1;
-        command = optarg;
-        break;
-      default:
-        usage();
+    case 't':
+      tflag = 1;
+      break;
+    case 's':
+      sflag = 1;
+      break;
+    case 'r':
+      rflag = 1;
+      command = optarg;
+      break;
+    default:
+      usage();
     }
   }
 
@@ -66,18 +66,18 @@ int main(int argc, char *argv[]) {
 
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_port = htons(SERVERPORT);
-  serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");  // Loopback
+  serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Loopback
   memset(serv_addr.sin_zero, '\0', sizeof(serv_addr.sin_zero));
 
-  struct AsdPacket *pack;
   int send_err;
 
   if (tflag) {
-    send_err = asd_send_packet(ASD_TEST, NULL, sfd, serv_addr);
+    send_err = asd_send_packet(ASD_TEST, NULL, 0, sfd, serv_addr);
   } else if (sflag) {
-    send_err = asd_send_packet(ASD_STOP, NULL, sfd, serv_addr);
+    send_err = asd_send_packet(ASD_STOP, NULL, 0, sfd, serv_addr);
   } else {
-    send_err = asd_send_packet(ASD_RUN, command, sfd, serv_addr);
+    send_err = asd_send_packet(ASD_RUN, command, strnlen(command, ASD_MAX_CMD),
+                               sfd, serv_addr);
   }
 
   if (send_err != 0) {
@@ -86,15 +86,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  char buf[BUF_SIZE];
-  struct sockaddr_in recv_addr;
-  socklen_t addr_len = sizeof(struct sockaddr_in);
-  int nbytes;
-
-  nbytes =
-      recvfrom(sfd, buf, BUF_SIZE, 0, (struct sockaddr *)&recv_addr, &addr_len);
-
-  printf("Received: %d bytes\n", nbytes);
+  printf("Received Ack\n");
 
   close(sfd);
 

@@ -99,8 +99,8 @@ ssize_t asd_send_packet(asd_msg_type type, char *cmd, size_t cmd_len, int sfd,
       continue;
     } else {
       /* Received a packet make sure it's an ack */
-      rbytes = recvfrom(sfd, pack, sizeof(AsdPacket), 0, (struct sockaddr *)&recv_addr,
-                  &addr_len);
+      rbytes = recvfrom(sfd, pack, sizeof(AsdPacket), 0,
+                        (struct sockaddr *)&recv_addr, &addr_len);
       if (pack->type != ASD_ACK) {
         err = -1;
       }
@@ -112,6 +112,3 @@ ssize_t asd_send_packet(asd_msg_type type, char *cmd, size_t cmd_len, int sfd,
 
   return err;
 }
-
-/* Receives a packet and stores the */
-int asd_receive_packet(AsdPacket *pack, char *buff) { return 0; }

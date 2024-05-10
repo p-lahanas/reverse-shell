@@ -1,5 +1,6 @@
+#include <asd/asd.h>
+
 #include <arpa/inet.h>
-#include <rtp/asd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,8 +9,6 @@
 #include <unistd.h>
 
 #define SERVPORT 5432
-
-#define BUF_SIZE 200
 
 int main(int argc, char *argv[]) {
   int sfd = socket(PF_INET, SOCK_DGRAM, 0);
@@ -24,7 +23,7 @@ int main(int argc, char *argv[]) {
 
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_port = htons(SERVPORT);
-  serv_addr.sin_addr.s_addr = INADDR_ANY;  // Accept any IP
+  serv_addr.sin_addr.s_addr = INADDR_ANY; // Accept any IP
   memset(serv_addr.sin_zero, '\0', sizeof(serv_addr.sin_zero));
 
   // bind socket to the specified IP and port
@@ -34,48 +33,42 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  char buf[BUF_SIZE];
+  AsdPacket pack;
   ssize_t nbytes;
-  int sbytes;
 
   struct sockaddr_in recv_addr;
   socklen_t addr_len = sizeof(struct sockaddr_in);
 
-  struct AsdPacket recv_pack;
-  struct AsdPacket *ack;
-
   int run = 1;
   while (run) {
-    nbytes = recvfrom(sfd, buf, BUF_SIZE, 0, (struct sockaddr *)&recv_addr,
-                      &addr_len);
+    nbytes = recvfrom(sfd, &pack, sizeof(AsdPacket), 0,
+                      (struct sockaddr *)&recv_addr, &addr_len);
 
     /* Received nothing so skip this iteration */
     if (nbytes == -1) {
       continue;
     }
-    memcpy(&recv_pack, buf, sizeof(struct AsdPacket));
+    printf("Received: %d\n", pack.type);
+    printf("Num bytes: %ld\n", nbytes);
+    switch (pack.type) {
+    case ASD_STOP:
+      run = 0;
+      break;
 
-    switch (recv_pack.msg_type) {
-      case ASD_STOP:
-        run = 0;
-        break;
+    case ASD_TEST:
+      break;
 
-      case ASD_TEST:
-        break;
-
-      case ASD_RUN:
-        /* Blindly run the command */
-        system(recv_pack.command);
-        break;
+    case ASD_RUN:
+      /* Blindly run the command */
+      system(pack.cmd);
+      break;
+    case ASD_ACK:
+      break;
     }
 
     /* Send out an ack */
-    ack = asd_create_packet(ASD_ACK, NULL);
-    sbytes = sendto(sfd, ack, sizeof(struct AsdPacket), 0,
-                    (struct sockaddr *)&recv_addr, addr_len);
-
-    if (sbytes == -1) {
-      perror("sendto");
+    if (asd_send_ack(sfd, recv_addr) != 0) {
+      perror("Sending ACK");
       close(sfd);
       exit(EXIT_FAILURE);
     }
