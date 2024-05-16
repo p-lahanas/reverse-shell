@@ -15,7 +15,9 @@ int tflag = 0; /* -t: Test packet */
 int sflag = 0; /* -s: Stock packet */
 
 static void usage(void) {
-  fprintf(stderr, "Usage: client [flag] \n");
+  fprintf(stderr,
+          "Usage: client [flag] \n"
+          "Sends an ASD message to the server. Requires exactly ONE flag.\n\n");
 
   fprintf(stderr,
           "Option (only use ONE flag at a time):\n"
@@ -68,16 +70,23 @@ int main(int argc, char *argv[]) {
   serv_addr.sin_port = htons(SERVERPORT);
   serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Loopback
   memset(serv_addr.sin_zero, '\0', sizeof(serv_addr.sin_zero));
+  AsdHeader head;
 
   int send_err;
 
   if (tflag) {
-    send_err = asd_send_packet(ASD_TEST, NULL, 0, sfd, serv_addr);
+    head.type = ASD_TEST;
+    head.cmd_len = 0;
+    send_err = asd_send_command(head, NULL, sfd, (struct sockaddr *)&serv_addr);
   } else if (sflag) {
-    send_err = asd_send_packet(ASD_STOP, NULL, 0, sfd, serv_addr);
+    head.type = ASD_STOP;
+    head.cmd_len = 0;
+    send_err = asd_send_command(head, NULL, sfd, (struct sockaddr *)&serv_addr);
   } else {
-    send_err = asd_send_packet(ASD_RUN, command, strnlen(command, ASD_MAX_CMD),
-                               sfd, serv_addr);
+    head.type = ASD_RUN;
+    head.cmd_len = strlen(command);
+    send_err =
+        asd_send_command(head, command, sfd, (struct sockaddr *)&serv_addr);
   }
 
   if (send_err != 0) {
@@ -86,7 +95,16 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  printf("Received Ack from server\n");
+  struct sockaddr_in recv_addr;
+  socklen_t addr_len = sizeof(struct sockaddr_in);
+  AsdMsg *pack;
+  pack = asd_recv_command(sfd, (struct sockaddr *)&recv_addr);
+  if (pack == NULL || pack->header.type != ASD_ACK) {
+    fprintf(stderr, "Didn't receive ACK from server\n");
+    exit(EXIT_FAILURE);
+  }
+
+  printf("Received ACK from server\n");
 
   close(sfd);
 

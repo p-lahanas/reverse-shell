@@ -24,3 +24,61 @@ As part of this assessment, we expect you to be able to articulate decisions mad
 - Usage instructions
 - A short (maximum 1-page) document explaining your design
   - This should also document the protocol used to communicate between client and server
+
+# Submission
+
+## Build Instructions
+The requirements are:
+
+- CMake 3.17 or better;
+- A C23 compatible compiler (gcc preferrable)
+
+To build run the following in the project root directory:
+
+```bash
+mkdir build
+```
+
+```bash
+cd build
+```
+
+```bash
+cmake ..
+```
+
+## Usage
+### Server
+To start the server, run the executable.
+```bash
+./server
+```
+### Client
+To run the client, specify an instruction using the corresponding flag. The run instruction requires an additional parameter which is the command to run. You must specify **EXACTLY ONE** flag when running the client. 
+```bash
+./client [flag]
+```
+Flags
+```
+Option (only use ONE flag at a time):
+  -r <command>  Send a run packet with the corresponding <command>
+  -t            Send a test packet
+  -s            Send a stop packet
+
+```
+**Example:** Send a test instruction
+```bash
+./client -t
+```
+**Example:** Run ls
+```bash
+./client -r ls
+```
+**Example:** Run ls with additional flags
+```bash
+./client -r "ls -al"
+```
+
+## TODO:
+- Add multithreading into the server to support multiple concurrent connections
+- Add sequence numbers in RTP so multiple packets can be sent at once, allowing for faster communication

@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  AsdPacket pack;
+  AsdMsg *pack;
   ssize_t nbytes;
 
   struct sockaddr_in recv_addr;
@@ -41,15 +41,13 @@ int main(int argc, char *argv[]) {
 
   int run = 1;
   while (run) {
-    nbytes = recvfrom(sfd, &pack, sizeof(AsdPacket), 0,
-                      (struct sockaddr *)&recv_addr, &addr_len);
-
-    /* Received nothing so skip this iteration */
-    if (nbytes == -1) {
+    pack = asd_recv_command(sfd, (struct sockaddr *)&recv_addr);
+    if (pack == NULL) {
+      fprintf(stderr, "Receive Error\n");
       continue;
     }
 
-    switch (pack.type) {
+    switch (pack->header.type) {
 
     case ASD_STOP:
       run = 0;
@@ -60,19 +58,22 @@ int main(int argc, char *argv[]) {
 
     case ASD_RUN:
       /* Blindly run the command */
-      system(pack.cmd);
+      if (system(pack->cmd) == -1) {
+        fprintf(stderr, "Command failed: %s\n", pack->cmd);
+      }
       break;
 
     case ASD_ACK:
       break;
     }
+    /* Free packet and cmd buffer */
+    free(pack->cmd);
+    free(pack);
 
     /* Send out an ack */
-    if (asd_send_ack(sfd, recv_addr) != 0) {
-      perror("Sending ACK");
+    if (asd_send_ack(sfd, (struct sockaddr *)&recv_addr) != 0) {
       fprintf(stderr, "Error sending ACK\n");
-      close(sfd);
-      exit(EXIT_FAILURE);
+      continue;
     }
   }
 

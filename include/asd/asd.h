@@ -1,28 +1,34 @@
-#ifndef ASD_H
-#define ASD_H
+#ifndef ASD_ASD_H
+#define ASD_ASD_H
 
 #include <netinet/in.h>
 #include <stddef.h>
-#include <sys/types.h>
-
-#define ASD_MAX_CMD 500  /* Max cmd supported */
-#define ASD_MAX_RETRY 5  /* Max. number of retransmissions */
-#define ASD_TIMEOUT 5000 /* Timeout for the retransmission (ms) */
 
 typedef enum {
   ASD_ACK,
   ASD_TEST,
   ASD_RUN,
   ASD_STOP,
-} asd_msg_type;
+} AsdMsgType;
 
 typedef struct {
-  asd_msg_type type;
-  char cmd[ASD_MAX_CMD];
-} AsdPacket;
+  AsdMsgType type;
+  size_t cmd_len;
+} AsdHeader;
 
-ssize_t asd_send_ack(int sfd, struct sockaddr_in dest_addr);
-ssize_t asd_send_packet(asd_msg_type type, char *cmd, size_t cmd_len, int sfd,
-                        struct sockaddr_in dest_addr);
+typedef struct {
+  AsdHeader header;
+  char *cmd;
+} AsdMsg;
+
+/* Send ASD_ACK message to destination */
+int asd_send_ack(int sfd, struct sockaddr *dest_addr);
+
+/* Send any ASD message */
+int asd_send_command(AsdHeader header, char *cmd, int sfd,
+                     struct sockaddr *dest_addr);
+
+/* Wait for an ASD message and return it */
+AsdMsg *asd_recv_command(int sfd, struct sockaddr *recv_addr);
 
 #endif
