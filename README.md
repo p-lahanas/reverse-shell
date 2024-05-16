@@ -44,7 +44,11 @@ cd build
 ```
 
 ```bash
-cmake --build ..
+cmake ..
+```
+
+```bash
+cmake --build .
 ```
 
 ## Usage
