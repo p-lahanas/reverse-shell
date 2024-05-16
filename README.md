@@ -44,19 +44,19 @@ cd build
 ```
 
 ```bash
-cmake ..
+cmake --build ..
 ```
 
 ## Usage
 ### Server
-To start the server, run the executable.
+From the build directory, to start the server, run the executable.
 ```bash
-./server
+./apps/server
 ```
 ### Client
 To run the client, specify an instruction using the corresponding flag. The run instruction requires an additional parameter which is the command to run. You must specify **EXACTLY ONE** flag when running the client. 
 ```bash
-./client [flag]
+./apps/client [flag]
 ```
 Flags
 ```
